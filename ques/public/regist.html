@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>注册</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="/js/vue.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <style>
+        * {
+            padding: 0px;
+            margin: 0px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        body {
+            width: 100%;
+            height: 100%;
+            background: url(/photo/bj3.jpg) no-repeat center center;
+            background-size: cover;
+
+        }
+
+        #container {
+            width: 400px;
+            margin: 40px auto 0 auto;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+            background: #fff;
+        }
+
+        .rtop {
+            font-size: 16px;
+            font-weight: 550;
+            padding: 1rem 0;
+            margin: 1rem 0;
+            color: rgb(246, 121, 37);
+            letter-spacing: 1PX;
+            text-align: center;
+        }
+
+        .rtop img {
+            width: 60%;
+        }
+
+        a {
+            color: rgba(0, 0, 0, 0.786);
+        }
+
+        a:hover {
+            color: rgba(248, 28, 28, 0.8);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <div class="rtop">
+            <img src="/photo/logo2.png" alt="">
+            <p>注册新用户</p>
+        </div>
+        <!-- status-icon="true" 验证结果图标(注意前面加:);label-position="left" 设置对齐方式; :rules="rules" 指定验证规则-->
+        <el-form id="regFrm" :status-icon="true" :rules="rules" label-position="left" action="/users/add" method="post" ref="form" :model="form"
+            label-width="80px">
+            <!-- prop属性必须设置(验证需要),名字需和下面form里设置的名称一致-->
+            <el-form-item label="用户名" prop="username">
+                <el-input v-model="form.username" name="username"></el-input>
+            </el-form-item>
+
+            <el-form-item label="密码" prop="password">
+                <el-input type="password" v-model="form.password" name="password"></el-input>
+            </el-form-item>
+
+            <el-form-item label="确认密码" prop="password2">
+                <el-input type="password" v-model="form.password2"></el-input>
+            </el-form-item>
+
+            <el-form-item label="邮箱" prop="email">
+                <el-input v-model="form.email" name="email"></el-input>
+            </el-form-item>
+            <el-form-item label="手机" prop="phone">
+                <el-input v-model="form.phone" name="phone"></el-input>
+            </el-form-item>
+            <el-form-item label="性别">
+                <el-radio-group v-model="form.sex">
+                    <el-radio name="sex" label="1">男</el-radio>
+                    <el-radio name="sex" label="2">女</el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <el-form-item>
+                <el-button @click="regist()" type="primary">注册用户</el-button>
+            </el-form-item>
+            <a href="/login">已有账号,登录</a>
+        </el-form>
+    </div>
+    <script>
+        new Vue({
+            el: '#container',
+            data: function () {   //data完整写法
+                var _this = this
+                //封装chkExist验证后台数据
+                var chkExist = function (option, callback) {
+                    // option = {
+                    //     filed:'username',
+                    //     value:'value',
+                    //     table:'users'
+                    // }
+                    //将获取到的值传给后台判断,检查是否存在
+                    $.get('/chkExist', {
+                        filed: option.filed,    //查找属性
+                        value: option.value,    //属性值
+                        table: option.table      //表格名称
+                    }, function (result) {
+                        //如果有这个值,error=0,没有=1
+                        if (result.error == 0) {
+                            callback()
+                        } else {
+                            callback('已存在')
+                        }
+                    })
+                }
+
+                //封装chkPwd,验证两次密码输入是否一致
+                var chkPwd = function (value, callback) {
+                    if (value.trim() == '') {
+                        callback(new Error('请输入确认密码'))
+                    } else if (value == _this.form.password) {
+                        callback()
+                    } else {
+                        callback(new Error('两次密码不一致'))
+                    }
+                }
+
+                return {
+                    form: {
+                        username: '',
+                        password: '',
+                        password2: '',
+                        email: '',
+                        phone: '',
+                        sex: '1'
+                    },
+                    rules: {  //验证规则
+                        username: [
+                            //validator: function (){}, 第三方自定义验证规则
+                            {
+                                validator: function (rule, value, callback) {
+                                    var usernamereg = /^[a-z]\w{2,15}$/
+                                    if (value.trim() == '') {  //trim去除两端空格
+                                        // callback()  //不写内容表示验证通过
+                                        callback(new Error('请输入用户名'))
+                                        // usernamereg.test(value)通过正则测试value值,正确返回true,否则false
+                                        //!取反,如果不满足条件,则返回true,执行callback错误信息
+                                    } else if (!usernamereg.test(value)) {
+                                        callback(new Error('请输入2-16个字符，以小写字母开始'))
+                                    } else {
+                                        // chkExist(rule, value, callback)
+                                        //验证是否存在
+                                        chkExist({
+                                            filed: 'username',
+                                            value: value,
+                                            table: 'users'
+                                        }, callback)
+                                    }
+                                },
+                                trigger: 'blur'  //blur失去焦点时触发,change内容改变时触发
+                            },
+                        ],
+                        password: [
+                            {   
+                                validator: function (rule, value, callback) {
+                                    var len = value.length
+                                    if (value.trim() == '') {
+                                        callback(new Error('请输入密码'))
+                                    } else if (len < 6 || len > 18) {
+                                        callback(new Error('密码长度需为6到18个字符'))
+                                    } else {
+                                        //在验证当前密码的同时触发password2的验证,检测是否一致
+                                        //validateField	对部分表单字段进行校验
+                                        _this.$refs.form.validateField('password2')
+                                        callback()
+                                    }
+                                }
+                                //不写触发方式的话,默认为change
+                            }
+                        ],
+                        password2: [{
+                            //将获取到的值传入chkPwd进行验证
+                            validator: function (rule, value, callback) {
+                                chkPwd(value, callback)
+                            }
+                        }],
+
+                        email: [
+                            {
+                                validator: function (rule, value, callback) {
+                                    if (value.trim() == '') {
+                                        callback(new Error('请输入邮箱'))
+                                    } else if (!/^[a-z0-9]+([._\\-]*[a-z0-9])*@([a-z0-9]+[-a-z0-9]*[a-z0-9]+.){1,63}[a-z0-9]+$/.test(value)) {
+                                        callback(new Error('邮箱格式不合法'))
+                                    } else {
+                                        chkExist({//验证邮箱是否被注册 
+                                            filed: 'email',
+                                            value: value,
+                                            table: 'users'
+                                        }, callback)
+                                    }
+                                },
+                                trigger: 'blur'
+                            }
+                        ],
+                        phone: [
+                            {
+                                validator: function (rule, value, callback) {
+                                    if (value.trim() == '') {
+                                        callback(new Error('请输入手机号'))
+                                    } else if (!/^[1][3,4,5,7,8][0-9]{9}$/.test(value)) {
+                                        callback(new Error('请输入正确的手机号'))
+                                    } else {
+                                        //验证是否存在
+                                        chkExist({
+                                            filed: 'phone',
+                                            value: value,
+                                            table: 'users'
+                                        }, callback)
+                                    }
+                                },
+                                trigger: 'blur'
+                            }
+                        ]
+                    }
+                }
+            },
+            methods: {
+                regist: function () {
+                    //此处validate触发所有字段的验证规则,满足=true,否则false
+                    this.$refs.form.validate(function(valid){
+                        console.log(valid)
+                        if(valid){  //验证全部通过提交数据
+                            regFrm.submit()
+                        }
+                    })
+                }
+            }
+        })
+
+    </script>
+</body>
+
+</html>

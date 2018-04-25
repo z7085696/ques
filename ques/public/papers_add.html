@@ -1,0 +1,120 @@
+<div id="paperAdd">
+
+    <div class="pcont">
+
+        <el-card class="pcontleft">
+            <el-tree :data="outline" :props="defaultProps" @check-change="selectNode" show-checkbox default-expand-all>
+            </el-tree>
+        </el-card>
+        <div class="pcontright">
+            <el-card v-for="(item,index) in papers.content" :key="'papers_'+index" :header="item.label">
+                <el-radio-group >
+                    <el-radio v-for="(i,index) in papers.item" :key="'item_'+index" :label="i.id">
+                        {{i.text}}
+                    </el-radio>
+                </el-radio-group>
+
+            </el-card>
+        </div>
+    </div>
+    <div slot="footer">
+        <el-button @click="dgShow">取 消</el-button>
+        <el-button type="primary" @click="confirm">确 定</el-button>
+    </div>
+    <!-- {{papers}} -->
+
+
+
+</div>
+
+<script>
+    new Vue({
+        el: '#paperAdd',
+        created: function () {
+            var _this = this
+            //读取大纲后台数据
+            $.get('/outline', function (result) {
+                if (result.error == 0) {
+                    _this.outline = result.data
+                }
+            })
+        },
+        methods: {
+            //取消
+            dgShow(){
+                indexVm.loadPage('/menu/papers.html')
+            },
+            //确定
+            confirm: function () {
+                var _this = this
+                this.$prompt('请输入问卷标题', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    inputPattern: /^.+?/,
+                    inputErrorMessage: '标题不能为空',
+                    callback: function (action, obj) {
+                        console.log(action)
+                        if (action == 'confirm') {
+                            _this.papers.title = obj.inputValue  //标题
+                            $.post('/papers/add', {
+                                title: _this.papers.title,
+                                content: JSON.stringify(_this.papers.content),
+                                item: JSON.stringify(_this.papers.item)
+                            }, function (result) {
+                                console.log(result)
+                            })
+                        }
+                    }
+                })
+            },
+            selectNode: function (data, isSelect) {
+                if (data.children.length == 0) {
+                    if (isSelect) {  //勾选的时候,为true,插入数据
+                        this.papers.content.push(data)
+                    } else {
+                        //取消勾选后,获取当前数据的索引
+                        var index = this.papers.content.indexOf(data)
+                        //删除数据
+                        this.papers.content.splice(index, 1)
+                    }
+
+                }
+            },
+        },
+        data: function () {
+            return {
+                papers: {
+                    title: '',
+                    content: [],
+                    item: [
+                        { id: 1, text: '优', val: 9 },
+                        { id: 2, text: '良', val: 8 },
+                        { id: 3, text: '中', val: 7 },
+                        { id: 4, text: '差', val: 6 }
+                    ]
+                },
+                outline: [],
+                defaultProps: {
+                    children: 'children',
+                    label: 'label'
+                }
+            }
+        }
+    })
+</script>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .pcont {
+        overflow: hidden;
+    }
+
+    .pcont>div {
+        float: left;
+    }
+</style>

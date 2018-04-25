@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="/js/vue.js"></script>
+    <script src="/js/js.cookie.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        header {
+            width: 100%;
+            height: 60px;
+            line-height: 60px;
+            border-bottom: 1px solid rgba(183, 179, 179, 0.793);
+            background: #0C0C0C;
+            overflow: hidden;
+            color: #fff;
+            padding-left: 50px;
+            padding-right: 50px;
+        }
+
+        .logo img {
+            width: 70px;
+            margin-left: 150px;
+            vertical-align: middle;
+        }
+
+        .logo span {
+            font-size: 20px;
+            line-height: 50px;
+            margin-left: 20px;
+            letter-spacing: 5PX;
+        }
+
+        .headright {
+            width: 59%;
+            display: inline-block;
+            overflow: hidden;
+            float: left;
+        }
+
+        .headright a {
+            float: right;
+            color: rgba(255, 255, 255, 0.889);
+            margin-right: 50px;
+            font-size: 13px;
+        }
+
+        .headright p {
+            float: right;
+            margin-right: 180px;
+        }
+
+        .headright img {
+            float: right;
+            margin-right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #fff;
+            margin-top: 10px;
+        }
+
+        .headright a:hover {
+            color: rgb(241, 69, 69);
+        }
+
+        .card {
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="release">
+        <header>
+            <div class="logo">
+                <img src="/photo/logo1.png" alt="">
+                <span>随堂问卷</span>
+            </div>
+        </header>
+        <div>
+            {{papers.title}}
+        </div>
+
+        <el-card class="card" v-for="(item,index) in papers.content" :key="'papers_'+index" :header="item.label">
+            <!--papers.content[index].answer绑定数据到每一个选项 -->
+            <el-radio-group v-model="papers.content[index].answer">
+                <el-radio v-for="(i,index) in papers.item" :key="'item_'+index" :label="i.id">
+                    {{i.text}}
+                </el-radio>
+            </el-radio-group>
+        </el-card>
+
+        <el-card class="card" header="您的建议">
+            <el-input type="textarea" :rows="2" placeholder="您的建议" v-model="papers.note">
+            </el-input>
+        </el-card>
+
+        <div>
+            <el-button type="info" @click="save">提交</el-button>
+        </div>
+
+    </div>
+
+
+
+    <script>
+
+        var rel = new Vue({
+            el: '#release',
+            methods: {
+                //提交
+                save: function () {
+                    var _this = this
+                    $.post('/papers/release/add', {  //添加用户答卷
+                        title: '',
+                        paper_id: _this.paperId,
+                        content: JSON.stringify(_this.papers.content),
+                        item: JSON.stringify(_this.papers.item),
+                        note: _this.papers.note,
+                        title: _this.papers.title,
+                        cuid: Cookies.getJSON('releaseInfo'+_this.paperId).cuid
+                    }, function (result) {
+                        console.log(result)
+                        //提交完成后自动刷新页面
+                        location.reload()
+                    })
+                }
+            },
+            created: function () {
+                var _this = this,
+                    id = this.paperId
+                $.get('/papers/find', { id: id }, function (result) {
+                    if (result.error != 0) return
+                    // console.log(result)
+                    _this.papers.title = result.data.title
+                    _this.papers.content = JSON.parse(result.data.content)
+                })
+            },
+            data: {
+                paperId : Cookies.getJSON('release_paper_id'),
+                papers: {
+                    title: '',
+                    content: [],
+                    note: '',
+                    item: [
+                        { id: 1, text: '优', val: 9 },
+                        { id: 2, text: '良', val: 8 },
+                        { id: 3, text: '中', val: 7 },
+                        { id: 4, text: '差', val: 6 }
+                    ]
+                },
+            }
+        })
+
+    </script>
+</body>
+
+</html>

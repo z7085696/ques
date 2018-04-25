@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="/js/vue.js"></script>
+    <script src="/js/js.cookie.js"></script>
+    <!-- 引入样式 -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- 引入组件库 -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+    <script src="//unpkg.com/echarts/dist/echarts.min.js"></script>
+    <script src="//unpkg.com/v-charts/lib/index.min.js"></script>
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        #nav>div {
+            float: left;
+        }
+
+        #cleft {
+            width: 15%;
+        }
+
+        #cright {
+            width: 85%;
+        }
+
+        header {
+            width: 100%;
+            height: 60px;
+            line-height: 60px;
+            border-bottom: 1px solid rgba(183, 179, 179, 0.793);
+            background: #0C0C0C;
+            overflow: hidden;
+            color: #fff;
+            padding-left: 50px;
+            padding-right: 50px;
+        }
+
+        .logo {
+            width: 40%;
+            float: left;
+        }
+
+        .logo img {
+            width: 70px;
+            margin-left: 150px;
+            vertical-align: middle;
+        }
+
+        .logo span {
+            font-size: 20px;
+            line-height: 50px;
+            margin-left: 20px;
+            letter-spacing: 5PX;
+        }
+
+        .headright {
+            width: 59%;
+            display: inline-block;
+            overflow: hidden;
+            float: left;
+        }
+
+        .headright a {
+            float: right;
+            color: rgba(255, 255, 255, 0.889);
+            margin-right: 60px;
+            font-size: 13px;
+        }
+
+        .headright p {
+            float: right;
+            margin-right: 90px;
+        }
+
+        .headright img {
+            float: right;
+            margin-right: 10px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #fff;
+            margin-top: 10px;
+        }
+
+        .headright a:hover {
+            color: rgb(241, 69, 69);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="home">
+        <header>
+            <div class="logo">
+                <img src="/photo/logo1.png" alt="">
+                <span>问卷调查系统</span>
+            </div>
+            <div class="headright">
+                <a href="/logout">注销登录</a>
+                <a  ><el-button type="info" plain size="mini" @click="personal">个人中心</el-button></a>
+                <p>用户名: {{username}}</p>
+                <img src="/photo/default.png" alt="">
+            </div>
+
+        </header>
+        <div id="nav">
+            <div id="cleft">
+                <el-menu default-active="2" class="el-menu-vertical-demo" @select="loadPage">
+                    <el-menu-item index="/menu/users.html">
+                        <i class="el-icon-location"></i>
+                        <span slot="title">用户管理</span>
+                    </el-menu-item>
+                    <el-menu-item index="/menu/outline.html">
+                        <i class="el-icon-location"></i>
+                        <span slot="title">大纲管理</span>
+                    </el-menu-item>
+                    <el-menu-item index="/menu/papers.html">
+                        <i class="el-icon-location"></i>
+                        <span slot="title">问卷管理</span>
+                    </el-menu-item>
+                    <el-menu-item index="/menu/release.html">
+                        <i class="el-icon-location"></i>
+                        <span slot="title">问卷选项管理</span>
+                    </el-menu-item>
+                    <el-menu-item index="/menu/my.html">
+                        <i class="el-icon-location"></i>
+                        <span slot="title">个人中心</span>
+                    </el-menu-item>
+                </el-menu>
+            </div>
+            <div id="cright">
+                cright
+            </div>
+
+        </div>
+
+        <div>
+            footer
+        </div>
+    </div>
+
+
+    <script>
+
+        var indexVm = new Vue({
+            el: '#home',
+            data: {
+                username: Cookies.getJSON('message').userinfo.username,
+            },
+            created() {
+                console.log(this.username)
+            },
+            methods: {
+                loadPage: function (index) {
+                    $.get(index, function (result) {
+                        $('#cright').html(result)   ////获取属性值,传递给html
+                    })
+
+                },
+                personal() {
+                    indexVm.loadPage('/menu/my.html')
+                }
+            }
+        })
+
+    </script>
+</body>
+
+</html>

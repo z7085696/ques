@@ -1,0 +1,137 @@
+<div id="paperEdit">
+
+    <div class="pcont">
+        <h1>编 辑</h1>
+        <el-card class="pcontleft">
+            <el-tree ref="tree" node-Key='id' :data="outline" :props="defaultProps" @check-change="selectNode" show-checkbox default-expand-all>
+            </el-tree>
+        </el-card>
+        <div class="pcontright">
+            <el-card v-for="(item,index) in papers.content" :key="'papers_'+index" :header="item.label">
+                <el-radio-group>
+                    <el-radio v-for="(i,index) in papers.item" :key="'item_'+index" :label="i.id">
+                        {{i.text}}
+                    </el-radio>
+                </el-radio-group>
+
+            </el-card>
+        </div>
+    </div>
+    <div slot="footer">
+        <el-button @click="pShow">取 消</el-button>
+        <el-button type="primary" @click="conf">确 定</el-button>
+    </div>
+
+
+</div>
+
+<script>
+    new Vue({
+        el: '#paperEdit',
+        created: function () {
+            var _this = this
+            //读取大纲后台数据
+            $.get('/outline', function (result) {
+                if (result.error == 0) {
+                    _this.outline = result.data
+                }
+            })
+
+            //获取cookie数据
+            $.get('/papers/find', { id: Cookies.get('paper_id') },
+                function (result) {
+                    if (result.error != 0) return;
+                    console.log(result)
+
+                    _this.$refs.tree.setCheckedNodes(JSON.parse(result.data.content));
+                    _this.papers.title = result.data.title
+                    _this.papers.item = JSON.parse(result.data.item)
+                    _this.papers.id = result.data.id
+                }
+            )
+        },
+        methods: {
+
+            conf: function () {
+                var _this = this
+                this.$prompt('请输入问卷标题', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    inputPattern: /^.+?/,
+                    inputErrorMessage: '标题不能为空',
+                    inputValue: _this.papers.title,
+                    callback: function (action, obj) {
+                        //action != 'confirm' 表示用户取消,return终止运行
+                        if (action == 'confirm')
+                            _this.papers.title = obj.inputValue
+                        //将输入传给后台
+                        $.post('/papers/edit', {
+                            id: _this.papers.id,   //需要编辑的id
+                            title: _this.papers.title,
+                            content: JSON.stringify(_this.papers.content),   //需要编辑的内容
+                            item: JSON.stringify(_this.papers.item)
+                        }, function (result) {
+                            _this.$message({
+                                type: 'success',
+                                message: '编辑成功'
+                            })
+                            indexVm.loadPage('/menu/papers.html')
+                        })
+                    }
+                })
+            },
+            pShow() {
+                indexVm.loadPage('/menu/papers.html')
+            },
+            selectNode: function (data, isSelect) {
+                if (data.children.length == 0) {
+                    if (isSelect) {  //勾选的时候,为true,插入数据
+                        this.papers.content.push(data)
+                    } else {
+                        //取消勾选后,获取当前数据的索引
+                        var index = this.papers.content.indexOf(data)
+                        //删除数据
+                        this.papers.content.splice(index, 1)
+                    }
+
+                }
+            },
+        },
+        data: function () {
+            return {
+                papers: {
+                    title: '',
+                    content: [],
+                    id: '',
+                    item: [
+                        { id: 1, text: '优', val: 9 },
+                        { id: 2, text: '良', val: 8 },
+                        { id: 3, text: '中', val: 7 },
+                        { id: 4, text: '差', val: 6 }
+                    ]
+                },
+                outline: [],
+                defaultProps: {
+                    children: 'children',
+                    label: 'label'
+                }
+            }
+        }
+    })
+</script>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .pcont {
+        overflow: hidden;
+    }
+
+    .pcont>div {
+        float: left;
+    }
+</style>

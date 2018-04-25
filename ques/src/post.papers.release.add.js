@@ -1,0 +1,31 @@
+//添加用户答卷
+
+const conn = require('./conn.js')
+
+module.exports = (req, res) => {
+  setTimeout(() => {
+    let content = req.body.content,
+      item = req.body.item,
+      title = req.body.title,
+      cuid = req.body.cuid,
+      paper_id = req.body.paper_id,
+      note = req.body.note,
+      sql = 'insert into `answer` set ?'
+    conn.query(sql, {
+      content, item, paper_id, note, title,cuid
+    }, function (error, result) {
+      if (error == null) {
+        res.json({
+          error: 0,
+          message: 'ok',
+        })
+      } else {
+        console.log(error)
+        res.json({
+          error: 1,
+          message: 'error'
+        })
+      }
+    })
+  }, 0)
+}

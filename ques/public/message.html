@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+  <script src="/js/vue.js"></script>
+  <script src="https://cdn.bootcss.com/js-cookie/latest/js.cookie.min.js"></script>
+  <style>
+    * {
+      padding: 0px;
+      margin: 0px;
+      box-sizing: border-box;
+    }
+    .mtop {
+      font-size: 20px;
+      font-weight: 550;
+      padding: 1rem 0;
+      margin: 1rem 0;
+      color: rgba(246, 121, 37, 0.814);
+      letter-spacing: 1PX;
+      text-align: center;
+      margin-bottom: 0;
+    }
+    .mtop img {
+      width: 250px;
+    }
+    .mcont {
+      font-size: 21px;
+    }
+    a {
+      color: rgba(0, 0, 0, 0.752);
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+    a:hover {
+      color: rgba(236, 19, 19, 0.8);
+    }
+    #container {
+      width: 600px;
+      height: 320px;
+      margin: 2rem auto 0 auto;
+      padding: 2rem 2rem;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      background: url(/photo/bj4.jpg) no-repeat center center;
+      background-size: cover;
+    }
+
+    .message {
+      padding: 10px;
+    }
+
+    .message p {
+      margin-bottom: 20px;
+    }
+
+    .success {
+      color: rgba(11, 241, 46, 0.883);
+    }
+
+    .error {
+      color: rgba(255, 0, 0, 0.8);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container">
+    <div class="mtop">
+      <img src="/photo/logo2.png" alt="">
+      <p>问卷调查系统</p>
+    </div>
+    <div class="message" :class="message.status">
+      <p class="mcont">{{message.msg}}</p>
+      <p>
+        <a :href="message.link">{{message.linkText}}</a>
+      </p>
+    </div>
+  </div>
+  <script>
+    var vm = new Vue({
+      el: '#container',
+      created: function () {
+        this.message = Cookies.getJSON('message')
+      },
+      data: function () {
+        return {
+          message: {}
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>

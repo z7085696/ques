@@ -1,0 +1,168 @@
+<div id="outline">
+    <div id="btn">
+        <el-button @click.stop="addOut" type="success" icon="el-icon-plus" size="mini">创建大纲</el-button>
+    </div>
+    <!-- default-expand-all,展开所有的子菜单;draggable可拖拽属性 -->
+    <el-tree default-expand-all :data="data" :props="defaultProps" draggable>
+        <!-- 自定义节点内容,slot-scope="{ node, data }"局部作用域,传递信息,node是节点,data是数据;
+        @mouseover="data.flag=true",鼠标放上去的时候flag=true;
+        @mouseout="data.flag=false",鼠标离开的时候flag=false
+        -->
+        <span @mouseover="data.flag=true" @mouseout="data.flag=false" slot-scope="{ node, data }">
+            {{data.label}}
+            <span v-show="data.flag">
+                <!-- data.flag 隐藏/显示按钮(false/true)-->
+                <el-button type="text" @click="editOutline(data)">
+                    <i class="el-icon-edit"></i>编辑</el-button>
+                <el-button type="text" @click.stop="addOutline(data)">
+                    <i class="el-icon-plus"></i>添加子节点</el-button>
+                <!-- v-show="data.children.length==0",当子菜单里没有内容时,出现删除 -->
+                <el-button v-show="data.children.length==0" type="text" @click.stop="delOutline(node,data)">
+                    <i class="el-icon-remove-outline"></i>删除</el-button>
+            </span>
+        </span>
+    </el-tree>
+</div>
+
+<script>
+    new Vue({
+        el: '#outline',
+        data: function () {
+            return {
+                data: [],
+                defaultProps: {
+                    children: 'children',  //设定子菜单的属性名称
+                    label: 'label'   //设定标题的属性名称
+                }
+            }
+        },
+        //钩子,获取后端数据
+        created: function () {
+            var _this = this
+            $.get('/outline', function (result) {
+                if (result.error != 0) { return }  //如果发生错误终止运行
+                _this.data = result.data
+            })
+        },
+        methods: {
+            //编辑 
+            editOutline: function (data) {
+                var _this = this
+                this.$prompt('请输入内容', '编辑子节点', {
+                    inputPattern: /^.+$/,
+                    inputErrorMessage: '内容不能为空',
+                    //inputValue回填值给prompt(父级)
+                    inputValue: data.label,
+                    callback: function (action, obj) {
+                        //action != 'confirm' 表示用户取消,return终止运行
+                        if (action != 'confirm') { return }
+                        //将输入传给后台
+                        $.post('/outline/edit', {
+                            id: data.id,   //需要编辑的id
+                            label: obj.inputValue   //需要编辑的内容
+                        }, function (result) {
+                            if (result.error != 0) { return }
+                            //双向绑定obj.inputValue数据
+                            _this.$set(data, 'label', obj.inputValue)
+                        })
+
+                    }
+                })
+            },
+            //删除
+            delOutline: function (node, data) {
+                //提示是否删除
+                this.$confirm('删除后不能恢复', '删除', {
+                    callback: function (action) {
+                        //如果用户点击确定
+                        if (action == 'confirm') {
+                            $.get('/outline/del', { id: data.id }, function (result) {
+                                if (result.error != 0) { return }
+                                //node.parent;找到node的父节点
+                                var parent = node.parent;
+                                //带有子标签的根标签或者根标签本身
+                                children = parent.data.children || parent.data;
+                                //遍历父节点下所有的子节点,返回ID值(找到索引)
+                                var index = children.findIndex(function (value) {
+                                    //返回id值等于当前对象(data)的id的值
+                                    return value.id == data.id
+                                })
+                                children.splice(index, 1) //从当前index开始删除1个
+                            })
+                        }
+                    }
+                })
+            },
+            //添加
+            addOutline: function (data) {
+                console.log(data)
+                var _this = this
+                //弹出框
+                this.$prompt('请输入内容', '添加子节点', {
+                    inputPattern: /^.+$/,    //验证输入内容
+                    inputErrorMessage: '内容不能为空',  //错误提示信息
+                    callback: function (action, obj) { //callback回调函数
+                        //action判断用户点了确定还是取消,obj输出当前对象
+                        //action != 'confirm' 表示用户取消,return终止运行
+                        if (action != 'confirm') { return }
+                        //插入输入的内容obj.inputValue,
+                        $.post('/outline/add', {
+                            //把新增输入的值传入后端
+                            label: obj.inputValue,
+                            pid: data.id,
+                            sort: 0
+                        }, function (result) {
+                            //后端数据添加成功后,把数据添加到前端
+                            if (result.error !== 0) { return }
+                            data.children.push({ //添加子节点
+                                label: obj.inputValue,
+                                children: [],
+                                id: result.id,  //传入id
+                                pid: data.id, //子节点的pid=父节点的id
+                                flag: false,
+                            })
+                        })
+                    }
+                })
+            },
+            //创建大纲
+            addOut: function (data) {
+                console.log(data)
+                var _this = this
+                //弹出框
+                this.$prompt('请输入内容', '添加子节点', {
+                    inputPattern: /^.+$/,    //验证输入内容
+                    inputErrorMessage: '内容不能为空',  //错误提示信息
+                    callback: function (action, obj) { //callback回调函数
+                        //action判断用户点了确定还是取消,obj输出当前对象
+                        //action != 'confirm' 表示用户取消,return终止运行
+                        if (action != 'confirm') { return }
+                        //插入输入的内容obj.inputValue,
+                        $.post('/outline/add', {
+                            //把新增输入的值传入后端
+                            label: obj.inputValue,
+                            pid: 0,
+                        }, function (result) {
+                            //后端数据添加成功后,把数据添加到前端
+                            if (result.error !== 0) { return }
+                            _this.data.push({ //添加子节点
+                                label: obj.inputValue,
+                                children: [],
+                                id: result.id,  //传入id
+                                pid: data.id, //子节点的pid=父节点的id
+                                flag: false,
+                            })
+                        })
+                    }
+                })
+            }
+        }
+    })
+
+</script>
+
+<style>
+    #btn{
+        margin:5px;
+    }
+</style>

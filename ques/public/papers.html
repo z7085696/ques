@@ -1,0 +1,92 @@
+<div id="paper">
+    <div id="btn">
+        <el-button onclick="indexVm.loadPage('/menu/papers_add.html')" type="success" icon="el-icon-plus" size="mini">创建问卷</el-button>
+    </div>
+
+    <el-table :data="paperList" style="width: 100%">
+        <el-table-column prop="title" label="标题" width="200">
+        </el-table-column>
+        <el-table-column prop="creator_id" label="创建人" width="200">
+        </el-table-column>
+        <el-table-column prop="ctime" label="创建时间">
+        </el-table-column>
+        <el-table-column label="操作">
+            <template slot-scope="scope">
+                <el-button type="primary" plain size="mini" @click="edit(scope.row.id)">编辑</el-button>
+                <a target="_blank" :href="'/papers/release?id=' + scope.row.id">
+                    <el-button type="success" plain size="mini">发布</el-button>
+                </a>
+                <el-button type="danger" plain size="mini" @click="delPage(scope)">删除</el-button>
+                <el-button type="warning" plain size="mini" @click="answer(scope.row.id)" style="margin: 0">详情</el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+
+</div>
+
+<script>
+    new Vue({
+        el: '#paper',
+        created: function () {
+            var _this = this
+            $.get('/papers/list', function (result) {
+                if (result.error != 0) { result }
+
+                _this.paperList = result.data
+            })
+        },
+        methods: {
+            //编辑
+            edit: function (id) {
+                indexVm.loadPage('/menu/papers_edit.html?paper_id=' + id)
+            },
+            //详情
+            answer: function (id) {
+                indexVm.loadPage('/menu/papers_answer.html?paper_id=' + id)
+            },
+            delPage: function (scope) {  //删除用户
+                var _this = this
+                this.$confirm('注意:删除后不可恢复!', '确定删除吗?', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning',
+                    callback: function (action) {
+                        if (action == 'cancel') {
+                            return
+                        }
+                        //点击确定后删除
+                        _this.loading = true
+                        $.get('/papers/del', { id: scope.row.id }, function (result) {
+                            if (result.error == 0) {
+                                // _this.papersData.splice(scope.$index, 1)
+                                _this.$message({
+                                    type: 'success',
+                                    message: '删除成功'
+                                });
+                            } else {
+                                console.error('删除失败')
+                            }
+                            _this.loading = false
+                        })
+                    }
+                })
+            },
+        },
+        data: function () {
+            return {
+                paperList: [],
+            }
+        }
+    })
+</script>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    #btn{
+        margin: 5px;
+    }
+</style>

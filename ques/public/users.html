@@ -1,0 +1,239 @@
+<div id="users">
+
+    <el-table v-loading="loading" :data="usersData" border style="width: 100%">
+        <el-table-column prop="id" label="编号" width="50">
+        </el-table-column>
+        <el-table-column label="头像" width="140">
+            <template slot-scope="scope">
+                <img :src="scope.row.photo" alt="">
+            </template>
+        </el-table-column>
+        <el-table-column prop="username" label="用户名" width="120">
+        </el-table-column>
+        <el-table-column label="性别" width="80">
+            <template slot-scope="scope">
+                {{sex[scope.row.sex]}}
+            </template>
+        </el-table-column>
+        <el-table-column prop="email" label="邮箱">
+        </el-table-column>
+        <el-table-column prop="phone" label="电话">
+        </el-table-column>
+        <el-table-column prop="ctime" label="创建时间">
+        </el-table-column>
+        <el-table-column prop="mtime" label="修改时间">
+        </el-table-column>
+        </el-table-column>
+        <el-table-column fixed="right" label="操作" width="200">
+            <template slot-scope="scope">
+                <el-button @click="del(scope)" type="danger" size="small" icon="el-icon-error" plain>删除</el-button>
+                <el-button type="primary" size="small" icon="el-icon-edit" plain @click="usersEdit(scope)">编辑</el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <el-dialog title="编辑" :visible.sync="userseditVisible" class="wid">
+        <el-form :model="editdata" id="regFrm" :status-icon="true" :rules="rules" label-position="left" ref="editdata">
+            <el-form-item label="用户名" prop="username">
+                <el-input v-model="editdata.username" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="邮箱"  prop="email">
+                <el-input v-model="editdata.email" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="手机"  prop="phone">
+                <el-input v-model="editdata.phone" auto-complete="off"></el-input>
+            </el-form-item>
+            <el-form-item label="性别" >
+                <el-radio-group v-model="editdata.sex">
+                    <el-radio :label="1">男</el-radio>
+                    <el-radio :label="2">女</el-radio>
+                    <el-radio :label="3">保密</el-radio>
+                </el-radio-group>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="userseditVisible = false">取 消</el-button>
+            <el-button type="primary" @click="userseditConfirm()">确 定</el-button>
+        </div>
+    </el-dialog>
+
+</div>
+<script>
+
+    new Vue({
+        el: '#users',
+        data: {
+            usersData: [],
+            sex: ['', '男', '女', '保密'],
+            loading: true,
+            userseditVisible: false,
+            editdata: {
+                username: '',
+                password: '',
+                email: '',
+                phone: '',
+                sex: '',
+                id: ''
+            },
+            
+            rules: {  //验证规则
+                username: [
+                    //validator: function (){}, 第三方自定义验证规则
+                    {
+                        validator: function (rule, value, callback) {
+                            var usernamereg = /^[a-z]\w{2,15}$/
+                            if (value.trim() == '') {  //trim去除两端空格
+                                // callback()  //不写内容表示验证通过
+                                callback(new Error('请输入用户名'))
+                                // usernamereg.test(value)通过正则测试value值,正确返回true,否则false
+                                //!取反,如果不满足条件,则返回true,执行callback错误信息
+                            } else if (!usernamereg.test(value)) {
+                                callback(new Error('请输入2-16个字符，以小写字母开始'))
+                            } else {
+                                callback()
+                            }
+                        },
+                        trigger: 'blur'  //blur失去焦点时触发,change内容改变时触发
+                    },
+                ],
+                email: [
+                    {
+                        validator: function (rule, value, callback) {
+                            if (value.trim() == '') {
+                                callback(new Error('请输入邮箱'))
+                            } else if (!/^[a-z0-9]+([._\\-]*[a-z0-9])*@([a-z0-9]+[-a-z0-9]*[a-z0-9]+.){1,63}[a-z0-9]+$/.test(value)) {
+                                callback(new Error('邮箱格式不合法'))
+                            } else {
+                                callback()
+                            }
+                        },
+                        trigger: 'blur'
+                    }
+                ],
+                phone: [
+                    {
+                        validator: function (rule, value, callback) {
+                            if (value.trim() == '') {
+                                callback(new Error('请输入手机号'))
+                            } else if (!/^[1][3,4,5,7,8][0-9]{9}$/.test(value)) {
+                                callback(new Error('请输入正确的手机号'))
+                            } else {
+                                callback()
+                            }
+                        },
+                        trigger: 'blur'
+                    }
+                ]
+            }
+        },
+        created: function () {
+            var _this = this
+            $.get('/users/get', function (result) {  //读取用户信息
+                if (result.error == 0) {
+                    _this.usersData = result.data
+
+                } else {
+                    console.error('数据获取失败')
+                }
+                _this.loading = false
+            }, 'json')
+        },
+        methods: {
+            del: function (scope) {  //删除用户
+                var _this = this
+                this.$confirm('注意:删除后不可恢复!', '确定删除吗?', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning',
+                    callback: function (action) {
+                        if (action == 'cancel') {
+                            return
+                        }
+                        //点击确定后删除
+                        _this.loading = true
+                        $.get('/users/del', { id: scope.row.id }, function (result) {
+                            if (result.error == 0) {
+                                _this.usersData.splice(scope.$index, 1)
+                                _this.$message({
+                                    type: 'success',
+                                    message: '删除成功'
+                                });
+                            } else {
+                                console.error('删除失败')
+                            }
+                            _this.loading = false
+                        })
+                    }
+                })
+            },
+            usersEdit(scope) {
+                var _this = this
+                console.log(scope)
+                this.editdata.phone = scope.row.phone
+                this.editdata.username = scope.row.username
+                this.editdata.sex = scope.row.sex
+                this.editdata.email = scope.row.email
+                this.editdata.id = scope.row.id
+                this.editdata.password = ''
+                this.userseditVisible = true
+            },
+            userseditConfirm() {
+                this.$refs.editdata.validate(function (valid) {
+                    if (!valid) {//验证全部通过提交数据
+                        return
+                    }
+                })
+                var _this = this;
+                console.log(_this.editdata)
+                $.post('/users/edit', {
+                    phone: _this.editdata.phone,
+                    username: _this.editdata.username,
+                    sex: _this.editdata.sex,
+                    email: _this.editdata.email,
+                    id: _this.editdata.id,
+                }, function (result) {
+                    if (result.error == 0) {
+                        _this.userseditVisible = false
+                        _this.loading = true
+                        $.get('/users/get', function (result) {
+                            if (result.error == 0) {
+                                _this.usersData = result.data
+                                _this.$message({
+                                    type: 'success',
+                                    message: '编辑成功!'
+                                })
+                            } else {
+                                console.error('获取失败')
+                            }
+                            _this.loading = false
+                        })
+                    } else {
+                        console.log("编辑失败")
+                        _this.$message({
+                            type: 'error',
+                            message: '编辑失败!'
+                        })
+                    }
+                })
+            }
+            // handleSelect: function (index) {
+            //     $.get(index, function (result) {
+            //         $('#add').html(result)   //获取属性值,传递给html
+            //     })
+
+            // }
+
+        },
+    })
+
+</script>
+
+
+<style>
+    .wid{
+        width: 800px;
+        margin:0 auto;
+    }
+
+</style>
+</html>
