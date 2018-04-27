@@ -44,7 +44,7 @@
             answer: function (id) {
                 indexVm.loadPage('/menu/papers_answer.html?paper_id=' + id)
             },
-            delPage: function (scope) {  //删除用户
+            delPage: function (scope) {  //删除问卷
                 var _this = this
                 this.$confirm('注意:删除后不可恢复!', '确定删除吗?', {
                     confirmButtonText: '确定',
@@ -55,14 +55,17 @@
                             return
                         }
                         //点击确定后删除
-                        _this.loading = true
+                       _this.loading = true
                         $.get('/papers/del', { id: scope.row.id }, function (result) {
                             if (result.error == 0) {
-                                // _this.papersData.splice(scope.$index, 1)
-                                _this.$message({
-                                    type: 'success',
-                                    message: '删除成功'
-                                });
+                                $.get('/papers/list', function (result) {
+                                    if (result.error != 0) { return }
+                                    _this.paperList = result.data
+                                    _this.$message({
+                                        type: 'success',
+                                        message: '删除成功'
+                                    });
+                                })
                             } else {
                                 console.error('删除失败')
                             }
