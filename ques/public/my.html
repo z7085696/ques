@@ -54,14 +54,14 @@
                     inputPattern: /[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\w](?:[\w-]*[\w])?\.)+[\w](?:[\w-]*[\w])?/,
                     inputErrorMessage: '邮箱格式不正确'
                 }).then(({ value }) => {
-                    $.get('/my/email', { val: value }, result => {
+                    $.get('/my/email', { val: value }, result => {      //把更改后的值插入到数据库
                         if (result.error == 0) {
                             this.$message({
                                 type: 'success',
                                 message: '你的新邮箱是: ' + value
                             });
                             $.get('/my/info', function (result) {
-                                if (result.error == 0) {
+                                if (result.error == 0) {                //编辑后刷新
                                     _this.tableData5 = result.data
                                 }
                             })
